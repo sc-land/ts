@@ -1,63 +1,66 @@
-use std::env;
 use std::fs;
-use std::process;
-use ts::{parse_ts, TSParser, Rule};
-use ts::ast::utils::analyze_program;
-use pest::Parser;
+use clap::{Arg, Command};
+use ts::dsl::parser::tree::Tree;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let matches = Command::new("TypeScript Parser")
+        .version("0.1.0")
+        .about("Parse TypeScript DSL files and display AST")
+        .arg(
+            Arg::new("file")
+                .help("The TypeScript file to parse")
+                .required(true)
+                .index(1),
+        )
+        .arg(
+            Arg::new("json")
+                .long("json")
+                .help("Output as JSON")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .get_matches();
 
-    if args.len() != 2 {
-        eprintln!("Usage: {} <typescript_file>", args[0]);
-        process::exit(1);
-    }
+    let file_path = matches.get_one::<String>("file").unwrap();
+    let output_json = matches.get_flag("json");
 
-    let filename = &args[1];
+    match fs::read_to_string(file_path) {
+        Ok(input) => {
+            match Tree::parse_input(input) {
+                Ok(tree) => {
+                    if output_json {
+                        match serde_json::to_string_pretty(&tree) {
+                            Ok(json) => println!("{}", json),
+                            Err(e) => eprintln!("❌ Erro ao serializar JSON: {}", e),
+                        }
+                    } else {
+                        println!("🎯 Arquivo parseado com sucesso: {}", file_path);
+                        println!("📊 Estatísticas:");
+                        println!("  - Classes encontradas: {}", tree.program.klasses.len());
 
-    let input = match fs::read_to_string(filename) {
-        Ok(content) => content,
-        Err(e) => {
-            eprintln!("❌ Erro ao ler arquivo {}: {}", filename, e);
-            process::exit(1);
-        }
-    };
+                        let total_props: usize = tree.program.klasses.iter()
+                            .map(|k| k.properties.len())
+                            .sum();
+                        println!("  - Total de propriedades: {}", total_props);
 
-    println!("📁 Arquivo: {}", filename);
-    println!("📝 Conteúdo:");
-    println!("{}", input);
-    println!();    // Parse da gramática
-    match TSParser::parse(Rule::ts, &input) {
-        Ok(_pairs) => {
-            println!("✅ Parse bem-sucedido!");            // Gerar AST
-            match parse_ts(&input) {
-                Ok(program) => {
-                    println!("🌳 AST gerada:");
-                    println!("{:#?}", program);
-                    
-                    // Análise estatística
-                    let stats = analyze_program(&program);
-                    println!();
-                    stats.print_summary();
-                    
-                    // Resumo detalhado
-                    println!("\n📋 Detalhes das Classes:");
-                    for class in &program.classes {
-                        println!("  🏛️  {}: {} propriedades", class.name, class.properties.len());
-                        for prop in &class.properties {
-                            println!("    • {}: {}", prop.name, prop.type_as_string());
+                        println!("\n📋 Estrutura:");
+                        for klass in &tree.program.klasses {
+                            println!("  class {} {{", klass.name);
+                            for prop in &klass.properties {
+                                println!("    {}: {:?};", prop.name, prop.metadata);
+                            }
+                            println!("  }}");
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("❌ Erro na geração da AST: {}", e);
-                    process::exit(1);
+                    eprintln!("❌ Erro ao fazer parsing: {}", e);
+                    std::process::exit(1);
                 }
             }
         }
         Err(e) => {
-            eprintln!("❌ Erro no parse: {}", e);
-            process::exit(1);
+            eprintln!("❌ Erro ao ler arquivo '{}': {}", file_path, e);
+            std::process::exit(1);
         }
     }
 }

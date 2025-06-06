@@ -1,8 +1,14 @@
-# Parser TypeScript Mínimo
+# TypeScript Parser DSL
 
-Um parser TypeScript mínimo implementado em Rust usando Pest, com AST correspondente.
+Um parser TypeScript mínimo implementado em Rust usando Pest, com AST correspondente e CLI interativo.
 
-## Funcionalidades Atuais
+## 🎯 Características
+
+- **Gramática Pest**: Define sintaxe TypeScript básica (classes com propriedades tipadas)
+- **AST Modular**: Estrutura organizada em módulos separados
+- **CLI Interativo**: Interface de linha de comando com saída formatada e JSON
+- **Suporte a Comentários**: Parser aceita comentários de linha (`//`)
+- **Testes Abrangentes**: Validação completa da estrutura AST
 
 - ✅ Parsing de classes simples
 - ✅ Propriedades com tipos primitivos (`number`, `string`, `boolean`)

@@ -1,0 +1,29 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+
+class Program {
+    klasses Klass[]
+}
+
+class Klass {
+  name String
+  properties Property[]
+}
+
+class Property {
+  name String
+  type PrimitiveType
+}
+
+enum PrimitiveType {
+    number
+    string
+    boolean
+}
+
+Program "1" *-- "many" Klass : classes
+Klass "1" *-- "many" Property : properties
+Property "1" *-- "1" PrimitiveType : type
+
+@enduml
