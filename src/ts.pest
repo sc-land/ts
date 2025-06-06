@@ -1,0 +1,29 @@
+//
+// Created by intellij-pest on 2025-06-06
+// ts
+// Author: fera
+//
+
+// Entrada principal
+ts = { SOI ~ (class_declaration)* ~ EOI }
+
+// Declaração de classe
+class_declaration = { "class" ~ identifier ~ "{" ~ class_body ~ "}" }
+
+// Corpo da classe
+class_body = { (property_declaration)* }
+
+// Declaração de propriedade
+property_declaration = { identifier ~ ":" ~ type_annotation ~ ";" }
+
+// Anotação de tipo
+type_annotation = { primitive_type }
+
+// Tipos primitivos
+primitive_type = { "number" | "string" | "boolean" }
+
+// Identificador
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Whitespace (espaços, tabs, newlines)
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
